@@ -5,7 +5,7 @@ namespace HumansVersusZombies
     public class DamageableManager : MonoBehaviour
     {
         [Header("Entity's health manager"), SerializeField]
-        private HealthManager m_Health;
+        private HealthManager m_HealthManager;
         [Header("Entity's damageables"), SerializeField]
         private Damageable[] m_Damageables;
 
@@ -13,7 +13,7 @@ namespace HumansVersusZombies
         {
             foreach(Damageable damageable in m_Damageables)
             {
-                damageable.DamageableHealth = m_Health;
+                damageable.HealthManager = m_HealthManager;
             }
         }
     }

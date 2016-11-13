@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace HumansVersusZombies
 {
@@ -10,6 +8,8 @@ namespace HumansVersusZombies
         private float m_RoundTimer;
         [SerializeField]
         private float m_MasterZombieTimer;
+        [SerializeField]
+        private int m_MasterZombieBonusHealth;
         [Header("Players and related"), SerializeField]
         private PlayerControllable[] m_Players;
         [SerializeField]
@@ -61,7 +61,7 @@ namespace HumansVersusZombies
         private void SpawnMasterZombie()
         {
             m_MasterZombieHasSpawned = true;
-            print("Master zombie spawned ! It is J" + m_CurrentMasterZombie + ", be ready!");
+            SpawnZombie(m_CurrentMasterZombie, true);
         }
 
         private void MasterZombieUpdate()
@@ -79,6 +79,14 @@ namespace HumansVersusZombies
             }
         }
         #endregion MasterZombie
+
+        #region Zombie
+        private void SpawnZombie(int a_PlayerID, bool a_IsMaster)
+        {
+            Human player = m_Players[a_PlayerID] as Human;
+            player.TurnToZombie(m_PlayerSpawns[a_PlayerID].position, a_IsMaster, m_MasterZombieBonusHealth);
+        }
+        #endregion Zombie
 
         #region RoundsManagement
         private void RoundTimerUpdate()

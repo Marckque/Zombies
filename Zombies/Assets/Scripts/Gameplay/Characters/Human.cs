@@ -8,7 +8,8 @@ namespace HumansVersusZombies
         private Weapon[] m_Weapons;
         private int m_CurrentWeapon;
 
-        public Camera GetPlayerCamera { get { return m_Camera; } }
+        [Header("Zombie"), SerializeField]
+        private Zombie m_Zombie;
 
         protected void Start()
         {
@@ -77,6 +78,21 @@ namespace HumansVersusZombies
                 {
                     weapon.GetCurrentPlayer(this);
                 }
+            }
+        }
+
+        public void TurnToZombie(Vector3 a_SpawnPosition, bool a_MasterZombie, int a_BonusHealth)
+        {
+            PlayerCamera.transform.SetParent(m_Zombie.PlayerCameraRoot);
+            PlayerCamera.transform.localPosition = Vector3.zero;
+
+            gameObject.SetActive(false);
+            m_Zombie.transform.position = a_SpawnPosition;
+            m_Zombie.gameObject.SetActive(true);
+
+            if (a_MasterZombie)
+            {
+                m_Zombie.HealthManager.AddHealth(a_BonusHealth);
             }
         }
     }

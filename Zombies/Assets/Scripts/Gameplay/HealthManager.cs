@@ -9,7 +9,7 @@ namespace HumansVersusZombies
 
         public int CurrentHealth { get; set; }
 
-        protected void Start()
+        protected void Awake()
         {
             CurrentHealth = m_BaseHealth;
         }
@@ -17,12 +17,16 @@ namespace HumansVersusZombies
         public void DiminishHealth(int a_Damage)
         {
             CurrentHealth -= a_Damage;
-            print("CurrentHealth: " + CurrentHealth);
 
             if (CurrentHealth <= 0)
             {
                 KillSelf();
             }
+        }
+
+        public void AddHealth(int a_Bonus)
+        {
+            CurrentHealth += a_Bonus;
         }
 
         public void KillSelf()

@@ -31,7 +31,7 @@ namespace HumansVersusZombies
         {
             ShootOutcome();
 
-            Ray ray = m_CurrentPlayer.GetPlayerCamera.ScreenPointToRay(Input.mousePosition);
+            Ray ray = m_CurrentPlayer.PlayerCamera.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
             // TO DO: Remove; Debug purposes only.
