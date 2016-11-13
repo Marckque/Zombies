@@ -47,13 +47,14 @@ namespace HumansVersusZombies
 
         protected void Movement()
         {
+            m_DesiredVelocityDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x;
+
             if (!m_CharacterController.isGrounded)
             {
                 Vector3 gravity = Physics.gravity * Time.fixedDeltaTime;
-                m_CurrentInput += gravity;
+                m_DesiredVelocityDirection += gravity;
             }
 
-            m_DesiredVelocityDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x; 
             m_CharacterController.Move(m_DesiredVelocityDirection * m_MaxVelocity * Time.fixedDeltaTime);
         }
 
@@ -69,7 +70,7 @@ namespace HumansVersusZombies
 
         private void Crouch()
         {
-            // TO DO: Think about a better solution if necessary
+            // TO DO: Think about a better solution if necessary - BoxCollider instead of RayCast so that it doesn't make you stand up when the middle of the collider is not in ray range
             if (!m_IsRunning)
             {
                 m_CharacterController.height = 1;
