@@ -16,6 +16,7 @@ namespace HumansVersusZombies
 
         public void DiminishHealth(int a_Damage)
         {
+            print("CurrentHealth: " + CurrentHealth);
             CurrentHealth -= a_Damage;
 
             if (CurrentHealth <= 0)
