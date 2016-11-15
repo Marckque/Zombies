@@ -20,7 +20,7 @@ public class MouseControls : MonoBehaviour
     private Transform m_CameraTransform;
     [SerializeField, Range(0f, 2f)]
     private float m_CameraOffsetY;
-    [SerializeField, Range(0f, 1f)]
+    [SerializeField, Range(-1f, 1f)]
     private float m_CameraOffsetZ;
 
     protected void Start()
