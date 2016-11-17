@@ -6,6 +6,8 @@ namespace HumansVersusZombies
     {
         protected override void Shoot()
         {
+            ShootOutcome();
+
             Ray ray = new Ray(m_CurrentPlayer.PlayerCameraRoot.transform.position, m_CurrentPlayer.PlayerCameraRoot.transform.forward);
             RaycastHit hit;
 

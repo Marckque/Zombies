@@ -33,11 +33,12 @@ namespace HumansVersusZombies
         protected void Update()
         {
             CheckInputs();
+            Movement();
         }
 
         protected void FixedUpdate()
         {
-            Movement();
+            //Movement();
         }
 
         #region Controls

@@ -58,7 +58,7 @@ namespace HumansVersusZombies
             }
         }
 
-        private void ShootOutcome()
+        protected void ShootOutcome()
         {
             m_ShootTime = m_ShootDelay;
         }
