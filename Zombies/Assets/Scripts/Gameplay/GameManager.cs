@@ -20,9 +20,27 @@ namespace HumansVersusZombies
         private float m_RoundTime;
         private float m_MasterZombieTime;
 
+        private static GameManager m_GameManager;
+        public static GameManager Instance { get { return m_GameManager; } }
+
+        public Transform[] PlayerSpawns { get { return m_PlayerSpawns; } }
+
         protected void Start()
         {
+            InitialiseSingleton(); 
             InitialiseRound();
+        }
+
+        private void InitialiseSingleton()
+        {
+            if (m_GameManager != null)
+            {
+                Debug.LogWarning("m_GameManager should be null.");
+            }
+            else
+            {
+                m_GameManager = this;
+            }
         }
 
         private void InitialiseRound()

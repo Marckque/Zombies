@@ -8,9 +8,11 @@ namespace HumansVersusZombies
         protected int m_Damage = 1;
         [SerializeField]
         protected float m_ShootDelay = 0.2f;
+        [SerializeField]
+        protected float m_ShootRange = 1f;
         private float m_ShootTime;
 
-        private Human m_CurrentPlayer;
+        protected PlayerControllable m_CurrentPlayer;
 
         protected void Update()
         {
@@ -21,13 +23,13 @@ namespace HumansVersusZombies
             }
         }
 
-        public void GetCurrentPlayer(Human a_Player)
+        public void GetCurrentPlayer(PlayerControllable a_Player)
         {
             m_CurrentPlayer = a_Player;
         }
 
         #region Shoot
-        private void Shoot()
+        protected virtual void Shoot()
         {
             ShootOutcome();
 
@@ -37,7 +39,7 @@ namespace HumansVersusZombies
             // TO DO: Remove; Debug purposes only.
             Debug.DrawRay(ray.origin, ray.direction * 10f, Color.green, m_ShootDelay);
 
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, ~10))
+            if (Physics.Raycast(ray, out hit, m_ShootRange, ~10))
             {
                 Damageable damageable = hit.collider.GetComponent<Damageable>();
 

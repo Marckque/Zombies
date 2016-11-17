@@ -20,6 +20,7 @@ namespace HumansVersusZombies
         private float m_CrouchVelocity;
 
         private bool m_IsRunning;
+        private bool m_IsJumping;
         private float m_MaxVelocity;
         private Vector3 m_CurrentInput;
         private Vector3 m_DesiredVelocityDirection;
@@ -40,6 +41,16 @@ namespace HumansVersusZombies
         }
 
         #region Controls
+        protected virtual bool MainAction()
+        {
+            return Input.GetMouseButton(0);
+        }
+
+        protected virtual bool SecondaryAction()
+        {
+            return Input.GetMouseButton(1);
+        }   
+
         protected virtual void CheckInputs()
         {
             GetMovementInput();
@@ -61,7 +72,9 @@ namespace HumansVersusZombies
         private void GetMovementInput()
         {
             m_IsRunning = !Input.GetKey(KeyCode.C);
+
             Crouch();
+            Jump();
 
             m_MaxVelocity = m_IsRunning ? m_RunVelocity : m_CrouchVelocity;
 
@@ -89,6 +102,11 @@ namespace HumansVersusZombies
                     m_IsRunning = false;
                 }
             }
+        }
+
+        private void Jump()
+        {
+            // Jump
         }
         #endregion Controls
     }

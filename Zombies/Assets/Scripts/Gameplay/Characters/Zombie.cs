@@ -4,22 +4,38 @@ namespace HumansVersusZombies
 {
     public class Zombie : PlayerControllable
     {
-        // Probably need a default weapon, always the same. Put it right in the prefab and it should work !
+        [Header("Weapon"), SerializeField]
+        private Weapon m_MeleeWeapon;
+
+        protected void Start()
+        {
+            InitialiseWeapons();
+        }
 
         protected override void CheckInputs()
         {
             base.CheckInputs();
 
-            CheckCut();
-        }
-
-        protected void CheckCut()
-        {
-            if (Input.GetMouseButton(0))
+            if (MainAction())
             {
-                // Cut !
+                MeleeAttack();
             }
+            
+            if (SecondaryAction())
+            {
+                // Secondary action
+            }        
         }
 
+        protected void MeleeAttack()
+        {
+            m_MeleeWeapon.CanShoot();
+        }
+
+        // This function also is in human ---> Need to be placed properly, or refactored
+        protected void InitialiseWeapons()
+        {
+           m_MeleeWeapon.GetCurrentPlayer(this);
+        }
     }
 }

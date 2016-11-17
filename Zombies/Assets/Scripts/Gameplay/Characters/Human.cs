@@ -20,19 +20,25 @@ namespace HumansVersusZombies
         {
             base.CheckInputs();
 
-            ChangeWeaponChange();
-            CheckShoot();
-        }
+            ChangeWeapon();
 
-        protected void CheckShoot()
-        {
-            if (Input.GetMouseButton(0))
+            if (MainAction())
             {
-                m_Weapons[m_CurrentWeapon].CanShoot();
+                Shoot();
             }
+
+            if (SecondaryAction())
+            {
+                // Secondary action
+            }    
         }
 
-        protected void ChangeWeaponChange()
+        protected void Shoot()
+        {
+            m_Weapons[m_CurrentWeapon].CanShoot();
+        }
+
+        protected void ChangeWeapon()
         {
             float mouseWheel = Input.GetAxis("Mouse ScrollWheel");
 
@@ -68,7 +74,7 @@ namespace HumansVersusZombies
         {
             if (m_Weapons.Length == 0)
             {
-                Debug.LogError("A human should have a weapon."); // In the game at least.
+                Debug.Log("A human should have a weapon."); // In the game at least.
             }
             else
             {
@@ -84,7 +90,12 @@ namespace HumansVersusZombies
         public void TurnToZombie(Vector3 a_SpawnPosition, bool a_MasterZombie, int a_BonusHealth)
         {
             PlayerCamera.transform.SetParent(m_Zombie.PlayerCameraRoot);
+
+            // Makes sure the camera starts in the right position/rotation/location
             PlayerCamera.transform.localPosition = Vector3.zero;
+            PlayerCameraRoot.transform.localPosition = Vector3.zero;
+            PlayerCamera.transform.localRotation = Quaternion.identity;
+            PlayerCameraRoot.transform.localRotation = Quaternion.identity;
 
             gameObject.SetActive(false);
             m_Zombie.transform.position = a_SpawnPosition;
