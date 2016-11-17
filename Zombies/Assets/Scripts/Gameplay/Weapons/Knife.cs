@@ -6,13 +6,13 @@ namespace HumansVersusZombies
     {
         protected override void Shoot()
         {
-            ShootOutcome();
+            base.Shoot();
 
             Ray ray = new Ray(m_CurrentPlayer.PlayerCameraRoot.transform.position, m_CurrentPlayer.PlayerCameraRoot.transform.forward);
             RaycastHit hit;
 
             // TO DO: Remove; Debug purposes only.
-            Debug.DrawRay(ray.origin, ray.direction * 10f, Color.green, m_ShootDelay);
+            Debug.DrawRay(ray.origin, ray.direction * 10f, Color.cyan, m_ShootDelay);
 
             if (Physics.Raycast(ray, out hit, m_ShootRange, ~9))
             {

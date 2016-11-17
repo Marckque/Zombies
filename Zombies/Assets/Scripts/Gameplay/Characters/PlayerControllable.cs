@@ -18,8 +18,12 @@ namespace HumansVersusZombies
         private float m_RunVelocity;
         [SerializeField]
         private float m_CrouchVelocity;
+        [SerializeField]
+        private float m_JumpHeight;
 
-        private bool m_IsRunning;
+        private Vector3 m_Gravity;
+
+        private bool m_IsRunning = true;
         private bool m_IsJumping;
         private float m_MaxVelocity;
         private Vector3 m_CurrentInput;
@@ -38,7 +42,7 @@ namespace HumansVersusZombies
 
         protected void FixedUpdate()
         {
-            //Movement();
+            //Movement(); // Fixed update ?
         }
 
         #region Controls
@@ -63,11 +67,20 @@ namespace HumansVersusZombies
 
             if (!m_CharacterController.isGrounded)
             {
-                Vector3 gravity = Physics.gravity * Time.fixedDeltaTime;
-                m_DesiredVelocityDirection += gravity;
+                m_Gravity += Physics.gravity * Time.deltaTime;
+            }
+            else
+            {
+                m_Gravity = Vector3.zero;
+
+                if (Input.GetKey(KeyCode.RightShift))
+                {
+                    Jump();
+                }
             }
 
-            m_CharacterController.Move(m_DesiredVelocityDirection * m_MaxVelocity * Time.fixedDeltaTime);
+            m_DesiredVelocityDirection += m_Gravity;
+            m_CharacterController.Move(m_DesiredVelocityDirection * m_MaxVelocity * Time.deltaTime);
         }
 
         private void GetMovementInput()
@@ -75,7 +88,6 @@ namespace HumansVersusZombies
             m_IsRunning = !Input.GetKey(KeyCode.C);
 
             Crouch();
-            Jump();
 
             m_MaxVelocity = m_IsRunning ? m_RunVelocity : m_CrouchVelocity;
 
@@ -107,7 +119,7 @@ namespace HumansVersusZombies
 
         private void Jump()
         {
-            // Jump
+            m_Gravity.y = m_JumpHeight;
         }
         #endregion Controls
     }
