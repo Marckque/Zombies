@@ -23,7 +23,8 @@ namespace HumansVersusZombies
 
         private Vector3 m_Gravity;
 
-        private bool m_IsRunning = true;
+        private bool m_IsRunning;
+        private bool m_IsCrouched;
         private bool m_IsJumping;
         private float m_MaxVelocity;
         private Vector3 m_CurrentInput;
@@ -85,19 +86,19 @@ namespace HumansVersusZombies
 
         private void GetMovementInput()
         {
-            m_IsRunning = !Input.GetKey(KeyCode.C);
-
             Crouch();
 
-            m_MaxVelocity = m_IsRunning ? m_RunVelocity : m_CrouchVelocity;
+            m_MaxVelocity = m_IsCrouched ? m_CrouchVelocity : m_RunVelocity;
 
             m_CurrentInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized;
         }
 
         private void Crouch()
         {
+            m_IsCrouched = Input.GetKey(KeyCode.C);
+
             // TO DO: Think about a better solution if necessary - BoxCollider instead of RayCast so that it doesn't make you stand up when the middle of the collider is not in ray range
-            if (!m_IsRunning)
+            if (m_IsCrouched)
             {
                 m_CharacterController.height = 1;
             }
@@ -106,13 +107,14 @@ namespace HumansVersusZombies
                 Ray ray = new Ray(transform.position, Vector3.up);
                 RaycastHit hit;
 
-                if (!Physics.Raycast(ray, out hit))
+                if (!Physics.Raycast(ray, out hit, 10)) // SphereCast à la place
                 {
+                    if (hit.collider != null) print("Hit: " + hit.collider.name);
                     m_CharacterController.height = 2;
                 }
                 else
                 {
-                    m_IsRunning = false;
+                    m_IsCrouched = true;
                 }
             }
         }
