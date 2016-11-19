@@ -14,18 +14,14 @@ namespace HumansVersusZombies
 
         protected PlayerControllable m_CurrentPlayer;
 
-        protected void Update()
-        {
-            // Delay between each shots
-            if (m_ShootTime > 0)
-            {
-                m_ShootTime -= Time.deltaTime;
-            }
-        }
-
         public void GetCurrentPlayer(PlayerControllable a_Player)
         {
             m_CurrentPlayer = a_Player;
+        }
+
+        protected void Update()
+        {
+            DelayBetweenShots();   
         }
 
         #region Shoot
@@ -58,9 +54,17 @@ namespace HumansVersusZombies
             }
         }
 
-        protected void ShootOutcome()
+        private void ShootOutcome()
         {
             m_ShootTime = m_ShootDelay;
+        }
+
+        private void DelayBetweenShots()
+        {
+            if (m_ShootTime > 0)
+            {
+                m_ShootTime -= Time.deltaTime;
+            }
         }
         #endregion Shoot
     }

@@ -4,28 +4,34 @@ namespace HumansVersusZombies
 {
     public class PlayerControllable : MonoBehaviour
     {
+        [Header("CharacterController"), SerializeField]
+        private CharacterController m_CharacterController;
+
         [Header("Camera"), SerializeField]
+        private Transform m_Head;
+        [SerializeField]
         private Camera m_Camera;
         [SerializeField]
         protected Transform m_CameraRoot;
-        [SerializeField]
-        private Transform m_Head;
 
         [Header("Health"), SerializeField]
         private HealthManager m_HealthManager;
 
         [Header("Movement"), SerializeField]
-        private CharacterController m_CharacterController;
-        [SerializeField]
         private AnimationCurve m_AccelerationCurve;
         [SerializeField]
         private float m_RunVelocity;
         [SerializeField]
         private float m_CrouchVelocity;
+
+        [Header("Jump"), SerializeField]
+        private AnimationCurve m_JumpCurve;
         [SerializeField]
         private float m_JumpHeight;
-        [SerializeField]
-        private AnimationCurve m_JumpCurve;
+
+        [Header("Weapons"), SerializeField]
+        protected Weapon[] m_Weapons;
+        protected int m_CurrentWeapon;
 
         private bool m_IsRunning;
         private bool m_IsCrouched;
@@ -43,33 +49,119 @@ namespace HumansVersusZombies
         public Transform PlayerCameraRoot { get { return m_CameraRoot; } }
         public HealthManager HealthManager { get { return m_HealthManager; } }
 
+        protected void Start()
+        {
+            InitialiseWeapons();
+        }
+
         protected void Update()
         {
             CheckInputs();
             Movement();
         }
 
-        protected void FixedUpdate()
-        {
-            //Movement(); // Fixed update ?
-        }
-
-        #region Controls
-        protected virtual bool MainAction()
-        {
-            return Input.GetMouseButton(0);
-        }
-
-        protected virtual bool SecondaryAction()
-        {
-            return Input.GetMouseButton(1);
-        }
-
         protected virtual void CheckInputs()
         {
             GetMovementInput();
+            GetWeaponsInput();
         }
 
+        protected void GetWeaponsInput()
+        {
+            ChangeWeapon();
+
+            if (Input.GetMouseButton(0))
+            {
+                MainWeaponAction();
+            }
+
+            if (Input.GetMouseButton(1))
+            {
+                SecondaryWeaponAction();
+            }
+        }
+
+        #region Inventory
+        private void InitialiseWeapons()
+        {
+            if (m_Weapons.Length == 0)
+            {
+                Debug.Log("A human should have a weapon."); // In the game at least.
+            }
+            else
+            {
+                m_CurrentWeapon = 0;
+
+                foreach (Weapon weapon in m_Weapons)
+                {
+                    weapon.GetCurrentPlayer(this);
+                }
+
+                UpdateWeaponModel();
+            }
+        }
+
+        private void ChangeWeapon()
+        {
+            float mouseWheel = Input.GetAxis("Mouse ScrollWheel");
+
+            // Not sure why I need to make sure it's different from 0... But else it keeps on switching from 0 to 1 and vice-versa... !
+            if (mouseWheel != 0)
+            {
+                if (mouseWheel > 0)
+                {
+                    if (m_CurrentWeapon < m_Weapons.Length - 1)
+                    {
+                        m_CurrentWeapon++;
+                    }
+                    else
+                    {
+                        m_CurrentWeapon = 0;
+                    }
+                }
+                else
+                {
+                    if (m_CurrentWeapon > 0)
+                    {
+                        m_CurrentWeapon--;
+                    }
+                    else
+                    {
+                        m_CurrentWeapon = m_Weapons.Length - 1;
+                    }
+                }
+
+                UpdateWeaponModel();
+            }
+        }
+
+        private void UpdateWeaponModel()
+        {
+            foreach (Weapon weapon in m_Weapons)
+            {
+                if (weapon != m_Weapons[m_CurrentWeapon])
+                {
+                    weapon.gameObject.SetActive(false);
+                }
+                else
+                {
+                    weapon.gameObject.SetActive(true);
+                }
+            }
+        }
+
+        private void MainWeaponAction()
+        {
+            m_Weapons[m_CurrentWeapon].CanShoot();
+        }
+
+        private void SecondaryWeaponAction()
+        {
+            // Secondary action
+        }
+        #endregion Inventory
+
+        #region Movement
         protected void Movement()
         {
             if (m_CurrentInput != Vector3.zero)
@@ -84,6 +176,15 @@ namespace HumansVersusZombies
             m_DesiredVelocityDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x;
             m_DesiredVelocityDirection *= m_AccelerationCurve.Evaluate(m_AccelerationTimer);
 
+            Gravity();
+            Jump();
+
+            m_DesiredVelocityDirection += m_Gravity;
+            m_CharacterController.Move(m_DesiredVelocityDirection.normalized * m_MaxVelocity * Time.deltaTime);
+        }
+
+        private void Gravity()
+        {
             if (!m_CharacterController.isGrounded)
             {
                 m_Gravity += Physics.gravity * Time.deltaTime;
@@ -97,11 +198,6 @@ namespace HumansVersusZombies
                     m_IsJumping = true;
                 }
             }
-
-            Jump();
-
-            m_DesiredVelocityDirection += m_Gravity;
-            m_CharacterController.Move(m_DesiredVelocityDirection.normalized * m_MaxVelocity * Time.deltaTime);
         }
 
         private void GetMovementInput()
@@ -154,6 +250,6 @@ namespace HumansVersusZombies
                 }
             }   
         }
-        #endregion Controls
+        #endregion Movement
     }
 }
