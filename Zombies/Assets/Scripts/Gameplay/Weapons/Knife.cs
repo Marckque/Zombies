@@ -20,7 +20,7 @@ namespace HumansVersusZombies
 
                 if (human != null)
                 {
-                    human.TurnToZombie(GameManager.Instance.PlayerSpawns[human.CurrentID].position, false, 0);
+                    human.TurnToZombie(GameManager.Instance.PlayerSpawns[human.CurrentManagerID].position, false, 0);
                 }
             }
         }

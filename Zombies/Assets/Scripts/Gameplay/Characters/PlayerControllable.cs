@@ -37,7 +37,8 @@ namespace HumansVersusZombies
         private float m_AccelerationTimer;
         private float m_AccumulatedJumpHeight;
 
-        public int CurrentID { get; set; }
+        public int CurrentManagerID { get; set; }
+        public int PlayerID { get; set; }
         public Camera PlayerCamera { get { return m_Camera; } }
         public Transform PlayerCameraRoot { get { return m_CameraRoot; } }
         public HealthManager HealthManager { get { return m_HealthManager; } }
@@ -114,7 +115,7 @@ namespace HumansVersusZombies
 
         private void Crouch()
         {
-            m_IsCrouched = Input.GetKey(KeyCode.C);
+            m_IsCrouched = Input.GetKey(KeyCode.LeftShift);
 
             // TO DO: Think about a better solution if necessary - BoxCollider instead of RayCast so that it doesn't make you stand up when the middle of the collider is not in ray range
             if (m_IsCrouched)
@@ -130,7 +131,6 @@ namespace HumansVersusZombies
 
                 if (!Physics.Raycast(ray, out hit)) // SphereCast à la place
                 {
-                    if (hit.collider != null) print("Hit: " + hit.collider.name);
                     m_CharacterController.height = 2;
                 }
                 else

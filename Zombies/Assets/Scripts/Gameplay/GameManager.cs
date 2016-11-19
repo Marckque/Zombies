@@ -66,7 +66,7 @@ namespace HumansVersusZombies
         {
             for (int i = 0; i < m_Players.Length; i++)
             {
-                m_Players[i].CurrentID = i;
+                m_Players[i].CurrentManagerID = i;
             }
         }
 
