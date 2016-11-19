@@ -17,20 +17,25 @@ namespace HumansVersusZombies
         [Header("Movement"), SerializeField]
         private CharacterController m_CharacterController;
         [SerializeField]
+        private AnimationCurve m_AccelerationCurve;
+        [SerializeField]
         private float m_RunVelocity;
         [SerializeField]
         private float m_CrouchVelocity;
         [SerializeField]
         private float m_JumpHeight;
-
-        private Vector3 m_Gravity;
+        [SerializeField]
+        private AnimationCurve m_JumpCurve;
 
         private bool m_IsRunning;
         private bool m_IsCrouched;
         private bool m_IsJumping;
         private float m_MaxVelocity;
+        private Vector3 m_Gravity;
         private Vector3 m_CurrentInput;
         private Vector3 m_DesiredVelocityDirection;
+        private float m_AccelerationTimer;
+        private float m_AccumulatedJumpHeight;
 
         public int CurrentID { get; set; }
         public Camera PlayerCamera { get { return m_Camera; } }
@@ -66,7 +71,17 @@ namespace HumansVersusZombies
 
         protected void Movement()
         {
+            if (m_CurrentInput != Vector3.zero)
+            {
+                m_AccelerationTimer += Time.deltaTime;
+            }
+            else
+            {
+                m_AccelerationTimer = 0;
+            }
+
             m_DesiredVelocityDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x;
+            m_DesiredVelocityDirection *= m_AccelerationCurve.Evaluate(m_AccelerationTimer);
 
             if (!m_CharacterController.isGrounded)
             {
@@ -76,14 +91,16 @@ namespace HumansVersusZombies
             {
                 m_Gravity = Vector3.zero;
 
-                if (Input.GetKey(KeyCode.RightShift) && !m_IsCrouched)
+                if (Input.GetKey(KeyCode.Space) && !m_IsCrouched)
                 {
-                    Jump();
+                    m_IsJumping = true;
                 }
             }
 
+            Jump();
+
             m_DesiredVelocityDirection += m_Gravity;
-            m_CharacterController.Move(m_DesiredVelocityDirection * m_MaxVelocity * Time.deltaTime);
+            m_CharacterController.Move(m_DesiredVelocityDirection.normalized * m_MaxVelocity * Time.deltaTime);
         }
 
         private void GetMovementInput()
@@ -97,7 +114,7 @@ namespace HumansVersusZombies
 
         private void Crouch()
         {
-            m_IsCrouched = Input.GetKey(KeyCode.RightControl);
+            m_IsCrouched = Input.GetKey(KeyCode.C);
 
             // TO DO: Think about a better solution if necessary - BoxCollider instead of RayCast so that it doesn't make you stand up when the middle of the collider is not in ray range
             if (m_IsCrouched)
@@ -106,7 +123,6 @@ namespace HumansVersusZombies
             }
             else
             {
-                //Ray ray = new Ray(transform.position, Vector3.up);
                 Ray ray = new Ray(m_Head.position, Vector3.up);
                 RaycastHit hit;
 
@@ -126,7 +142,17 @@ namespace HumansVersusZombies
 
         private void Jump()
         {
-            m_Gravity.y = m_JumpHeight;
+            if (m_IsJumping)
+            {
+                m_AccumulatedJumpHeight += Time.deltaTime;
+                m_Gravity.y += m_JumpCurve.Evaluate(m_AccumulatedJumpHeight) * m_JumpHeight;
+
+                if (m_Gravity.y >= m_JumpHeight)
+                {
+                    m_IsJumping = false;
+                    m_AccumulatedJumpHeight = 0;
+                }
+            }   
         }
         #endregion Controls
     }
