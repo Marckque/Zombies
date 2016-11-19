@@ -8,6 +8,8 @@ namespace HumansVersusZombies
         private Camera m_Camera;
         [SerializeField]
         protected Transform m_CameraRoot;
+        [SerializeField]
+        private Transform m_Head;
 
         [Header("Health"), SerializeField]
         private HealthManager m_HealthManager;
@@ -55,7 +57,7 @@ namespace HumansVersusZombies
         protected virtual bool SecondaryAction()
         {
             return Input.GetMouseButton(1);
-        }   
+        }
 
         protected virtual void CheckInputs()
         {
@@ -74,7 +76,7 @@ namespace HumansVersusZombies
             {
                 m_Gravity = Vector3.zero;
 
-                if (Input.GetKey(KeyCode.RightShift))
+                if (Input.GetKey(KeyCode.RightShift) && !m_IsCrouched)
                 {
                     Jump();
                 }
@@ -95,7 +97,7 @@ namespace HumansVersusZombies
 
         private void Crouch()
         {
-            m_IsCrouched = Input.GetKey(KeyCode.C);
+            m_IsCrouched = Input.GetKey(KeyCode.RightControl);
 
             // TO DO: Think about a better solution if necessary - BoxCollider instead of RayCast so that it doesn't make you stand up when the middle of the collider is not in ray range
             if (m_IsCrouched)
@@ -104,10 +106,13 @@ namespace HumansVersusZombies
             }
             else
             {
-                Ray ray = new Ray(transform.position, Vector3.up);
+                //Ray ray = new Ray(transform.position, Vector3.up);
+                Ray ray = new Ray(m_Head.position, Vector3.up);
                 RaycastHit hit;
 
-                if (!Physics.Raycast(ray, out hit, 10)) // SphereCast à la place
+                Debug.DrawRay(ray.origin, ray.direction * 2f, Color.red, 0.75f);
+
+                if (!Physics.Raycast(ray, out hit)) // SphereCast à la place
                 {
                     if (hit.collider != null) print("Hit: " + hit.collider.name);
                     m_CharacterController.height = 2;
