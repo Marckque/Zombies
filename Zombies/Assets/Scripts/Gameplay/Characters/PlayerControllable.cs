@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 namespace HumansVersusZombies
 {
@@ -21,6 +22,8 @@ namespace HumansVersusZombies
         [Header("Movement"), SerializeField]
         private AnimationCurve m_AccelerationCurve;
         [SerializeField]
+        private AnimationCurve m_DecelerationCurve;
+        [SerializeField]
         private float m_RunVelocity;
         [SerializeField]
         private float m_CrouchVelocity;
@@ -28,20 +31,29 @@ namespace HumansVersusZombies
         [Header("Jump"), SerializeField]
         private AnimationCurve m_JumpCurve;
         [SerializeField]
-        private float m_JumpHeight;
+        private float m_JumpStrength;
+        [SerializeField, Range(0.1f, 1f)]
+        private float m_JumpDuration = 1f;   
 
         [Header("Weapons"), SerializeField]
         protected Weapon[] m_Weapons;
         protected int m_CurrentWeapon;
 
-        private bool m_IsRunning;
-        private bool m_IsCrouched;
         private bool m_IsJumping;
+        private bool m_IsCrouching;
+        private bool m_IsOnFloor;
+        private bool m_CanJump = true;
+
         private float m_MaxVelocity;
         private Vector3 m_Gravity;
         private Vector3 m_CurrentInput;
-        private Vector3 m_DesiredVelocityDirection;
+        private Vector3 m_Direction;
+        private Vector3 m_InputDirection;
+        private Vector3 m_LastDirection;
+        private AnimationCurve m_VelocityCurve;
         private float m_AccelerationTime;
+        private float m_DecelerationTime;
+        private float m_VelocityTime;
         private float m_JumpTime;
 
         public int CurrentManagerID { get; set; }
@@ -58,6 +70,7 @@ namespace HumansVersusZombies
 
         protected void Update()
         {
+            OnFloor();
             CheckInputs();
         }
 
@@ -163,65 +176,49 @@ namespace HumansVersusZombies
         #endregion Inventory
 
         #region Movement
+        private void GetMovementInput()
+        {
+            Gravity();
+
+            m_IsCrouching = Input.GetKey(KeyCode.LeftShift);
+            Crouch();
+
+            m_CurrentInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
+            Movement();
+
+            m_CharacterController.Move(m_Gravity * Time.deltaTime);
+            m_CharacterController.Move(m_Direction.normalized * m_MaxVelocity * Time.deltaTime);
+        }
+
         protected void Movement()
         {
             if (m_CurrentInput != Vector3.zero)
             {
+                m_DecelerationTime = 0;
                 m_AccelerationTime += Time.deltaTime;
+                m_InputDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x;
+                m_LastDirection = m_InputDirection;
             }
             else
             {
                 m_AccelerationTime = 0;
+                m_InputDirection = Vector3.zero;
+                m_DecelerationTime += Time.deltaTime;
             }
 
-            m_DesiredVelocityDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x;
-            m_DesiredVelocityDirection *= m_AccelerationCurve.Evaluate(m_AccelerationTime);
+            m_VelocityCurve = m_CurrentInput != Vector3.zero ? m_AccelerationCurve : m_DecelerationCurve;
+            m_VelocityTime = m_AccelerationTime > 0 ? m_AccelerationTime : m_DecelerationTime;
 
-            ApplyGravity();
+            m_MaxVelocity = m_IsCrouching ? m_CrouchVelocity : m_RunVelocity - m_Weapons[m_CurrentWeapon].Weight;
+            m_MaxVelocity = m_IsCrouching ? m_CrouchVelocity : m_MaxVelocity *= m_VelocityCurve.Evaluate(m_VelocityTime);
 
-            m_CharacterController.Move(m_DesiredVelocityDirection.normalized * m_MaxVelocity * Time.deltaTime);
-        }
-
-        private void ApplyGravity()
-        {
-            Gravity();
-            Jump();
-
-            m_DesiredVelocityDirection += m_Gravity;
-        }
-
-        private void Gravity()
-        {
-            if (!m_CharacterController.isGrounded)
-            {
-                m_Gravity += Physics.gravity * Time.deltaTime;
-            }
-            else
-            {
-                m_Gravity = Vector3.zero;
-
-                if (Input.GetKey(KeyCode.Space))
-                {
-                    m_IsJumping = true;
-                }
-            }
-        }
-
-        private void GetMovementInput()
-        {
-            m_MaxVelocity = m_IsCrouched ? m_CrouchVelocity : m_RunVelocity - m_Weapons[m_CurrentWeapon].Weight;
-            m_CurrentInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized;
-
-            Crouch();
-            Movement();
+            m_Direction = m_IsCrouching ? m_InputDirection : m_LastDirection;
         }
 
         private void Crouch()
         {
-            m_IsCrouched = Input.GetKey(KeyCode.LeftShift);
-
             // TO DO: Think about a better solution if necessary - BoxCollider instead of RayCast so that it doesn't make you stand up when the middle of the collider is not in ray range
-            if (m_IsCrouched)
+            if (m_IsCrouching)
             {
                 m_CharacterController.height = 1;
             }
@@ -236,24 +233,54 @@ namespace HumansVersusZombies
                 }
                 else
                 {
-                    m_IsCrouched = true;
+                    m_IsCrouching = true;
                 }
             }
         }
 
-        private void Jump()
+        private void Gravity()
+        {
+            m_Gravity += Physics.gravity * Time.deltaTime;
+
+            m_IsJumping = Input.GetKeyDown(KeyCode.Space);
+
+            if (m_IsJumping && m_CanJump)
+            {
+                m_CanJump = false;
+                StartCoroutine(Jump());
+            }
+        }
+
+        IEnumerator Jump()
         {
             if (m_IsJumping)
             {
-                m_JumpTime += Time.deltaTime;
-                m_Gravity.y += m_JumpCurve.Evaluate(m_JumpTime) * m_JumpHeight;
-
-                if (m_Gravity.y >= m_JumpHeight)
+                while (m_JumpTime < m_JumpDuration)
                 {
-                    m_IsJumping = false;
-                    m_JumpTime = 0;
+                    m_JumpTime += Time.deltaTime;
+                    m_Gravity.y = m_JumpCurve.Evaluate(m_JumpTime) * m_JumpStrength;
+
+                    yield return new WaitForEndOfFrame();
                 }
-            }   
+
+                m_JumpTime = 0;
+                m_CanJump = true;
+            }
+        }  
+
+        private void OnFloor()
+        {
+            Ray ray = new Ray(transform.position, Vector3.down);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, 0.5f))
+            {
+                m_IsOnFloor = true;
+            }
+            else
+            {
+                m_IsOnFloor = false;
+            }
         }
         #endregion Movement
     }
