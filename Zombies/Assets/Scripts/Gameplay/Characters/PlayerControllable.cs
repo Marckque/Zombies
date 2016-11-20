@@ -4,6 +4,7 @@ namespace HumansVersusZombies
 {
     public class PlayerControllable : MonoBehaviour
     {
+        #region Variables
         [Header("CharacterController"), SerializeField]
         private CharacterController m_CharacterController;
 
@@ -40,14 +41,15 @@ namespace HumansVersusZombies
         private Vector3 m_Gravity;
         private Vector3 m_CurrentInput;
         private Vector3 m_DesiredVelocityDirection;
-        private float m_AccelerationTimer;
-        private float m_AccumulatedJumpHeight;
+        private float m_AccelerationTime;
+        private float m_JumpTime;
 
         public int CurrentManagerID { get; set; }
         public int PlayerID { get; set; }
         public Camera PlayerCamera { get { return m_Camera; } }
         public Transform PlayerCameraRoot { get { return m_CameraRoot; } }
         public HealthManager HealthManager { get { return m_HealthManager; } }
+        #endregion Variables
 
         protected void Start()
         {
@@ -57,7 +59,6 @@ namespace HumansVersusZombies
         protected void Update()
         {
             CheckInputs();
-            Movement();
         }
 
         protected virtual void CheckInputs()
@@ -166,21 +167,27 @@ namespace HumansVersusZombies
         {
             if (m_CurrentInput != Vector3.zero)
             {
-                m_AccelerationTimer += Time.deltaTime;
+                m_AccelerationTime += Time.deltaTime;
             }
             else
             {
-                m_AccelerationTimer = 0;
+                m_AccelerationTime = 0;
             }
 
             m_DesiredVelocityDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x;
-            m_DesiredVelocityDirection *= m_AccelerationCurve.Evaluate(m_AccelerationTimer);
+            m_DesiredVelocityDirection *= m_AccelerationCurve.Evaluate(m_AccelerationTime);
 
+            ApplyGravity();
+
+            m_CharacterController.Move(m_DesiredVelocityDirection.normalized * m_MaxVelocity * Time.deltaTime);
+        }
+
+        private void ApplyGravity()
+        {
             Gravity();
             Jump();
 
             m_DesiredVelocityDirection += m_Gravity;
-            m_CharacterController.Move(m_DesiredVelocityDirection.normalized * m_MaxVelocity * Time.deltaTime);
         }
 
         private void Gravity()
@@ -193,7 +200,7 @@ namespace HumansVersusZombies
             {
                 m_Gravity = Vector3.zero;
 
-                if (Input.GetKey(KeyCode.Space) && !m_IsCrouched)
+                if (Input.GetKey(KeyCode.Space))
                 {
                     m_IsJumping = true;
                 }
@@ -202,11 +209,11 @@ namespace HumansVersusZombies
 
         private void GetMovementInput()
         {
-            Crouch();
-
-            m_MaxVelocity = m_IsCrouched ? m_CrouchVelocity : m_RunVelocity;
-
+            m_MaxVelocity = m_IsCrouched ? m_CrouchVelocity : m_RunVelocity - m_Weapons[m_CurrentWeapon].Weight;
             m_CurrentInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized;
+
+            Crouch();
+            Movement();
         }
 
         private void Crouch()
@@ -223,8 +230,6 @@ namespace HumansVersusZombies
                 Ray ray = new Ray(m_Head.position, Vector3.up);
                 RaycastHit hit;
 
-                Debug.DrawRay(ray.origin, ray.direction * 2f, Color.red, 0.75f);
-
                 if (!Physics.Raycast(ray, out hit)) // SphereCast à la place
                 {
                     m_CharacterController.height = 2;
@@ -240,13 +245,13 @@ namespace HumansVersusZombies
         {
             if (m_IsJumping)
             {
-                m_AccumulatedJumpHeight += Time.deltaTime;
-                m_Gravity.y += m_JumpCurve.Evaluate(m_AccumulatedJumpHeight) * m_JumpHeight;
+                m_JumpTime += Time.deltaTime;
+                m_Gravity.y += m_JumpCurve.Evaluate(m_JumpTime) * m_JumpHeight;
 
                 if (m_Gravity.y >= m_JumpHeight)
                 {
                     m_IsJumping = false;
-                    m_AccumulatedJumpHeight = 0;
+                    m_JumpTime = 0;
                 }
             }   
         }

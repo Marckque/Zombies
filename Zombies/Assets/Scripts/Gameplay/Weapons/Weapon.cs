@@ -10,9 +10,15 @@ namespace HumansVersusZombies
         protected float m_ShootDelay = 0.2f;
         [SerializeField]
         protected float m_ShootRange = 1f;
+        [SerializeField]
+        protected float m_Weight = 0f;
+        [SerializeField]
+        private GameObject m_BulletImpact;
         private float m_ShootTime;
 
         protected PlayerControllable m_CurrentPlayer;
+        public float Weight { get { return m_Weight; } }
+
 
         public void GetCurrentPlayer(PlayerControllable a_Player)
         {
@@ -43,6 +49,9 @@ namespace HumansVersusZombies
                 {
                     damageable.CalculateDamage(m_Damage);
                 }
+
+                GameObject bulletImpact = (GameObject) Instantiate(m_BulletImpact, hit.point, Quaternion.identity);
+                bulletImpact.transform.rotation = Quaternion.LookRotation(transform.position - hit.point);
             }
         }
 
