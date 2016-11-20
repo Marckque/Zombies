@@ -11,6 +11,8 @@ namespace HumansVersusZombies
 
         [Header("Camera"), SerializeField]
         private Transform m_Head;
+        //[SerializeField]
+        //private BoxCollider m_HeadCollider;
         [SerializeField]
         private Camera m_Camera;
         [SerializeField]
@@ -21,34 +23,40 @@ namespace HumansVersusZombies
 
         [Header("Movement"), SerializeField]
         private AnimationCurve m_AccelerationCurve;
+        //[SerializeField, Range(0.1f, 1f)]
+        //private float m_AccelerationDuration = 1f;
         [SerializeField]
         private AnimationCurve m_DecelerationCurve;
+        //[SerializeField, Range(0.1f, 1f)]
+        //private float m_DecelerationDuration = 1f;
         [SerializeField]
-        private float m_RunVelocity;
+        private float m_RunVelocity = 1f;
         [SerializeField]
-        private float m_CrouchVelocity;
+        private float m_CrouchVelocity = 1f;
+        [SerializeField]
+        private float m_FallSpeed = 1f;
 
         [Header("Jump"), SerializeField]
         private AnimationCurve m_JumpCurve;
         [SerializeField]
-        private float m_JumpStrength;
+        private float m_JumpStrength = 1f;
         [SerializeField, Range(0.1f, 1f)]
-        private float m_JumpDuration = 1f;   
+        private float m_JumpDuration = 1f;
 
         [Header("Weapons"), SerializeField]
         protected Weapon[] m_Weapons;
-        protected int m_CurrentWeapon;
+        protected int m_CurrentWeapon = 0;
 
-        private bool m_IsJumping;
+        private bool m_Jump;
         private bool m_IsCrouching;
         private bool m_IsOnFloor;
         private bool m_CanJump = true;
 
-        private float m_MaxVelocity;
+        private float m_MaxVelocity = 1f;
         private Vector3 m_Gravity;
         private Vector3 m_CurrentInput;
         private Vector3 m_Direction;
-        private Vector3 m_InputDirection;
+        private Vector3 m_CurrentDirection;
         private Vector3 m_LastDirection;
         private AnimationCurve m_VelocityCurve;
         private float m_AccelerationTime;
@@ -66,11 +74,14 @@ namespace HumansVersusZombies
         protected void Start()
         {
             InitialiseWeapons();
+
+            //m_AccelerationCurve.keys[m_AccelerationCurve.length - 1].time = m_AccelerationDuration;
+            //m_DecelerationCurve.keys[m_DecelerationCurve.length - 1].time = m_DecelerationDuration;
         }
 
         protected void Update()
         {
-            OnFloor();
+            //OnFloor();
             CheckInputs();
         }
 
@@ -186,7 +197,7 @@ namespace HumansVersusZombies
             m_CurrentInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
             Movement();
 
-            m_CharacterController.Move(m_Gravity * Time.deltaTime);
+            m_CharacterController.Move(m_Gravity.normalized * m_FallSpeed * Time.deltaTime);
             m_CharacterController.Move(m_Direction.normalized * m_MaxVelocity * Time.deltaTime);
         }
 
@@ -196,13 +207,13 @@ namespace HumansVersusZombies
             {
                 m_DecelerationTime = 0;
                 m_AccelerationTime += Time.deltaTime;
-                m_InputDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x;
-                m_LastDirection = m_InputDirection;
+                m_CurrentDirection = transform.forward * m_CurrentInput.z + transform.right * m_CurrentInput.x;
+                m_LastDirection = m_CurrentDirection;
             }
             else
             {
                 m_AccelerationTime = 0;
-                m_InputDirection = Vector3.zero;
+                m_CurrentDirection = Vector3.zero;
                 m_DecelerationTime += Time.deltaTime;
             }
 
@@ -212,7 +223,7 @@ namespace HumansVersusZombies
             m_MaxVelocity = m_IsCrouching ? m_CrouchVelocity : m_RunVelocity - m_Weapons[m_CurrentWeapon].Weight;
             m_MaxVelocity = m_IsCrouching ? m_CrouchVelocity : m_MaxVelocity *= m_VelocityCurve.Evaluate(m_VelocityTime);
 
-            m_Direction = m_IsCrouching ? m_InputDirection : m_LastDirection;
+            m_Direction = m_IsCrouching ? m_CurrentDirection : m_LastDirection;
         }
 
         private void Crouch()
@@ -242,18 +253,20 @@ namespace HumansVersusZombies
         {
             m_Gravity += Physics.gravity * Time.deltaTime;
 
-            m_IsJumping = Input.GetKeyDown(KeyCode.Space);
+            m_Jump = Input.GetKeyDown(KeyCode.Space);
 
-            if (m_IsJumping && m_CanJump)
+            if (m_Jump)
             {
-                m_CanJump = false;
                 StartCoroutine(Jump());
             }
         }
 
         IEnumerator Jump()
         {
-            if (m_IsJumping)
+            RaycastHit hit;
+            bool canJump = !Physics.Raycast(m_Head.position, Vector3.up, out hit);
+
+            if (m_Jump && canJump)
             {
                 while (m_JumpTime < m_JumpDuration)
                 {
@@ -264,7 +277,6 @@ namespace HumansVersusZombies
                 }
 
                 m_JumpTime = 0;
-                m_CanJump = true;
             }
         }  
 
